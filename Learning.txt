@@ -11,3 +11,9 @@ Learnt about basics of WinProc:
 	HDC is a handle to the Device Context
 	Use the HDC to draw to the client area of the window
 	BeginPaint and EndPaint
+
+
+Commit - Copy and paste of Tutorial
+Was having compile issues, with old code.
+The reason was that i didnt declare WndProc before WndMain - SO obvious in hindsight 
+but they didnt do it in the tutorial, so i thought it was an exception because windows. I learnding
