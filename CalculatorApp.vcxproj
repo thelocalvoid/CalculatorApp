@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{bee66ccb-e2ae-46ed-9fbc-c02bd1308e80}</ProjectGuid>
+    <ProjectGuid>{535e6334-58ea-4795-98f0-dde4e25b4a8d}</ProjectGuid>
     <RootNamespace>CalculatorApp</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -139,20 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CalculatorApp.h" />
-    <ClInclude Include="framework.h" />
-    <ClInclude Include="Resource.h" />
-    <ClInclude Include="targetver.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="CalculatorApp.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="CalculatorApp.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="CalculatorApp.ico" />
-    <Image Include="small.ico" />
+    <ClCompile Include="App.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
