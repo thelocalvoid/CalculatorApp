@@ -12,10 +12,18 @@
 static TCHAR szWindowClass[] = _T("DesktopApp");
 
 // The string that appears in the application's title bar.
-static TCHAR szTitle[] = _T("Windows Desktop Guided Tour Application");
+static TCHAR szTitle[] = _T("Calculator to be");
 
 // Stored instance handle for use in Win32 API calls such as FindResource
 HINSTANCE hInst;
+
+// Forward declaration of container
+HWND buttonContainer = NULL;
+HWND textContainer = NULL;
+
+int margin = 20;
+int gap = 20;
+int textConHeight = 100;
 
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -79,9 +87,10 @@ int WINAPI WinMain(
         NULL
     );
 
-    HWND subwindow = CreateWindowEx(0, TEXT("STATIC"), TEXT("CONTAINER"), WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, 40, 360, 640, 360, hWnd, NULL, hInstance, NULL);
+    textContainer   = CreateWindowEx(0, TEXT("STATIC"), TEXT("TEXT_SCREEN"), WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, 40, 40, 640, textConHeight, hWnd, NULL, hInstance, NULL);
+    buttonContainer = CreateWindowEx(0, TEXT("STATIC"), TEXT("CONTAINER"), WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, 40, 360, 640, 320, hWnd, NULL, hInstance, NULL);
 
-    HWND button = CreateWindowEx(0, TEXT("BUTTON"), TEXT("CLICK ME"), WS_VISIBLE | WS_CHILD, 50, 50, 100, 50, subwindow, NULL, hInstance, NULL);
+    HWND button = CreateWindowEx(0, TEXT("BUTTON"), TEXT("CLICK ME"), WS_VISIBLE | WS_CHILD, 50, 50, 100, 50, buttonContainer, NULL, hInstance, NULL);
 
     if (!hWnd)
     {
@@ -131,15 +140,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         // Here your application is laid out.
         // For this introduction, we just print out "Hello, Windows desktop!"
         // in the top left corner.
-        TextOut(hdc,
-            5, 5,
-            greeting, _tcslen(greeting));
         // End application-specific layout section.
 
         EndPaint(hWnd, &ps);
         break;
     case WM_DESTROY:
         PostQuitMessage(0);
+        break;
+    case WM_SIZE:
+
+        RECT rc;
+        GetClientRect(hWnd, &rc);
+
+        MoveWindow(buttonContainer, margin, textConHeight + margin + gap, rc.right - (margin * 2), rc.bottom - (textConHeight + (margin * 2) + gap), TRUE);
+        MoveWindow(textContainer,   margin, margin,                       rc.right - (margin * 2), textConHeight, TRUE);
+
         break;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
