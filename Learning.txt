@@ -2,3 +2,12 @@ Commit - WinMain Setup
 Learnt about basics on WinMain:
 	Registering and creating a window
 	Creating a message loop to communicate with WinProc
+
+
+Commit - WinProc Setup
+Learnt about basics of WinProc:
+	Using a switch to handle each message
+	WM_PAINT is used when the window needs to be redrawn
+	HDC is a handle to the Device Context
+	Use the HDC to draw to the client area of the window
+	BeginPaint and EndPaint

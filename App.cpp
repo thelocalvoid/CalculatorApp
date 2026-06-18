@@ -106,9 +106,34 @@ int WINAPI WinMain(
 /// 
 /// Info here: https://learn.microsoft.com/en-us/windows/win32/winmsg/window-procedures
 /// </summary>
-LRESULT CALLBACK WndProc(
-	_In_ HWND   hWnd,
-	_In_ UINT   message,
-	_In_ WPARAM wParam,
-	_In_ LPARAM lParam
-) {};
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	PAINTSTRUCT ps;
+	HDC hdc;
+	TCHAR greeting[] = _T("Hello, Windows desktop!");
+
+	switch (message)
+	{
+	case WM_PAINT:
+		hdc = BeginPaint(hWnd, &ps);
+
+		// Here your application is laid out.
+		// For this introduction, we just print out "Hello, Windows desktop!"
+		// in the top left corner.
+		TextOut(hdc,
+			5, 5,
+			greeting, _tcslen(greeting));
+		// End application specific layout section.
+
+		EndPaint(hWnd, &ps);
+		break;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+	default:
+		return DefWindowProc(hWnd, message, wParam, lParam);
+		break;
+	}
+
+	return 0;
+}
