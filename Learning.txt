@@ -1,0 +1,4 @@
+Commit - WinMain Setup
+Learnt about basics on WinMain:
+	Registering and creating a window
+	Creating a message loop to communicate with WinProc
