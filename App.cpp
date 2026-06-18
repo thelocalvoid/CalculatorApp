@@ -72,12 +72,16 @@ int WINAPI WinMain(
         szTitle,
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT,
-        500, 100,
+        720, 720,
         NULL,
         NULL,
         hInstance,
         NULL
     );
+
+    HWND subwindow = CreateWindowEx(0, TEXT("STATIC"), TEXT("CONTAINER"), WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, 40, 360, 640, 360, hWnd, NULL, hInstance, NULL);
+
+    HWND button = CreateWindowEx(0, TEXT("BUTTON"), TEXT("CLICK ME"), WS_VISIBLE | WS_CHILD, 50, 50, 100, 50, subwindow, NULL, hInstance, NULL);
 
     if (!hWnd)
     {
