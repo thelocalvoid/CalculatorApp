@@ -1,10 +1,15 @@
-// HelloWindowsDesktop.cpp
+
+
+
+
 // compile with: /D_UNICODE /DUNICODE /DWIN32 /D_WINDOWS /c
 
 #include <windows.h>
 #include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
+#include <iostream>
+#include <string>
 
 // Global variables
 
@@ -17,13 +22,26 @@ static TCHAR szTitle[] = _T("Calculator to be");
 // Stored instance handle for use in Win32 API calls such as FindResource
 HINSTANCE hInst;
 
-// Forward declaration of container
+// Forward declaration of containers
 HWND buttonContainer = NULL;
 HWND textContainer = NULL;
 
+// Forward declaration of variables
+int buttonConOffsetY = NULL;
+int buttonConHeight = NULL;
+
+// Stylization Settings
 int margin = 20;
 int gap = 20;
-int textConHeight = 100;
+int textConHeight = 100; 
+
+int buttonHeight = 50;
+// Width is 2x the height
+int buttonWidth = buttonHeight * 2;
+int buttonMarginX = 8;
+int buttonMarginY = 8;
+int buttonGapX = 4;
+int buttonGapY = 4;
 
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -87,10 +105,6 @@ int WINAPI WinMain(
         NULL
     );
 
-    textContainer   = CreateWindowEx(0, TEXT("STATIC"), TEXT("TEXT_SCREEN"), WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, 40, 40, 640, textConHeight, hWnd, NULL, hInstance, NULL);
-    buttonContainer = CreateWindowEx(0, TEXT("STATIC"), TEXT("CONTAINER"), WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, 40, 360, 640, 320, hWnd, NULL, hInstance, NULL);
-
-    HWND button = CreateWindowEx(0, TEXT("BUTTON"), TEXT("CLICK ME"), WS_VISIBLE | WS_CHILD, 50, 50, 100, 50, buttonContainer, NULL, hInstance, NULL);
 
     if (!hWnd)
     {
@@ -132,15 +146,56 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     HDC hdc;
     TCHAR greeting[] = _T("Hello, Windows desktop!");
 
+
+
     switch (message)
     {
+    case WM_CREATE:
+
+        buttonContainer = CreateWindowEx(0, TEXT("STATIC"), TEXT(""), WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, 40, 360, 640, 320, hWnd, NULL, hInst, NULL);
+        textContainer = CreateWindowEx(0, TEXT("STATIC"), TEXT(""), WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, 40, 40, 640, textConHeight, hWnd, NULL, hInst, NULL);
+
+#define CREATE_BTN(text, collumn, row) \
+        do { \
+            int x = buttonMarginX + (collumn * (buttonGapX + buttonWidth)); \
+            int y = buttonMarginY + (row * (buttonGapY + buttonHeight)); \
+            CreateWindowEx(0, TEXT("BUTTON"), text, WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, x, y, buttonWidth, buttonHeight, buttonContainer, NULL, hInst, NULL); \
+        } while(0)
+
+
+        CREATE_BTN(TEXT("("),  0, 0);
+        CREATE_BTN(TEXT(")"),  1, 0);
+        CREATE_BTN(TEXT("%"),  2, 0);
+        CREATE_BTN(TEXT("CE"), 3, 0);
+
+        CREATE_BTN(TEXT("7"), 0, 1);
+        CREATE_BTN(TEXT("8"), 1, 1);
+        CREATE_BTN(TEXT("9"), 2, 1);
+        CREATE_BTN(TEXT("/"), 3, 1);
+
+        CREATE_BTN(TEXT("4"), 0, 2);
+        CREATE_BTN(TEXT("5"), 1, 2);
+        CREATE_BTN(TEXT("6"), 2, 2);
+        CREATE_BTN(TEXT("x"), 3, 2);
+
+        CREATE_BTN(TEXT("1"), 0, 3);
+        CREATE_BTN(TEXT("2"), 1, 3);
+        CREATE_BTN(TEXT("3"), 2, 3);
+        CREATE_BTN(TEXT("-"), 3, 3);
+
+        CREATE_BTN(TEXT("0"), 0, 4);
+        CREATE_BTN(TEXT("."), 1, 4);
+        CREATE_BTN(TEXT("="), 2, 4);
+        CREATE_BTN(TEXT("+"), 3, 4);
+
+        return 0;
     case WM_PAINT:
         hdc = BeginPaint(hWnd, &ps);
 
         // Here your application is laid out.
-        // For this introduction, we just print out "Hello, Windows desktop!"
-        // in the top left corner.
+        // 
         // End application-specific layout section.
+
 
         EndPaint(hWnd, &ps);
         break;
@@ -152,8 +207,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         RECT rc;
         GetClientRect(hWnd, &rc);
 
-        MoveWindow(buttonContainer, margin, textConHeight + margin + gap, rc.right - (margin * 2), rc.bottom - (textConHeight + (margin * 2) + gap), TRUE);
-        MoveWindow(textContainer,   margin, margin,                       rc.right - (margin * 2), textConHeight, TRUE);
+        buttonConOffsetY = textConHeight + margin + gap;
+        buttonConHeight = rc.bottom - (textConHeight + (margin * 2) + gap);
+
+        MoveWindow(buttonContainer, margin, buttonConOffsetY, rc.right - (margin * 2), buttonConHeight, TRUE);
+        MoveWindow(textContainer,   margin, margin,           rc.right - (margin * 2), textConHeight,                        TRUE);
+
+        break;
+    case WM_KEYDOWN:
+        TCHAR msg[32];
+
+        wsprintf(msg, _T("Key Pressed: %u\n"), wParam);
+
+        OutputDebugString(msg);
+        break;
+    case WM_KEYUP:
 
         break;
     default:
