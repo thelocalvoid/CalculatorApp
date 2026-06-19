@@ -13,6 +13,30 @@
 
 // Global variables
 
+#define ID_BUTTON_ZERO    100
+#define ID_BUTTON_ONE     101
+#define ID_BUTTON_TWO     102
+#define ID_BUTTON_THREE   103
+#define ID_BUTTON_FOUR    104
+#define ID_BUTTON_FIVE    105
+#define ID_BUTTON_SIX     106
+#define ID_BUTTON_SEVEN   107
+#define ID_BUTTON_EIGHT   108
+#define ID_BUTTON_NINE    109
+
+#define ID_BUTTON_ADD     110
+#define ID_BUTTON_MINUS   111
+#define ID_BUTTON_DIVIDE  112
+#define ID_BUTTON_MULTIP  113
+#define ID_BUTTON_EQUALS  114
+#define ID_BUTTON_CLEARE  115
+#define ID_BUTTON_LPEREN  116
+#define ID_BUTTON_RPEREN  117
+#define ID_BUTTON_PERIOD  118
+#define ID_BUTTON_PERCEN  119
+
+
+
 // The main window class name.
 static TCHAR szWindowClass[] = _T("DesktopApp");
 
@@ -25,6 +49,7 @@ HINSTANCE hInst;
 // Forward declaration of containers
 HWND buttonContainer = NULL;
 HWND textContainer = NULL;
+HWND textDisplay = NULL;
 
 // Forward declaration of variables
 int buttonConOffsetY = NULL;
@@ -134,6 +159,45 @@ int WINAPI WinMain(
     return (int)msg.wParam;
 }
 
+
+
+// Global or class member to store the original procedure
+WNDPROC g_pOriginalStaticProc = NULL;
+
+// The new Window Procedure for the Static Control
+LRESULT CALLBACK StaticContainerProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+    case WM_COMMAND:
+    {
+        // Check if the message is from a button inside this container
+        int wmId = LOWORD(wParam);
+
+        // Optional: Verify the button belongs to this container if you have multiple
+        // if (wmId == IDC_BUTTON_IN_CONTAINER) 
+        {
+            // Get the handle to the MAIN window (Grandparent)
+            // GA_ROOTOWNER gets the top-level window
+            HWND hMainWnd = GetAncestor(hWnd, GA_ROOT);
+
+            if (hMainWnd)
+            {
+                // Forward the message to the main window
+                SendMessage(hMainWnd, WM_COMMAND, wParam, lParam);
+                return 0; // Message handled
+            }
+        }
+        break;
+    }
+    }
+
+    // Pass all other messages to the original static control procedure
+    return CallWindowProc(g_pOriginalStaticProc, hWnd, uMsg, wParam, lParam);
+}
+
+
+
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
 //  PURPOSE:  Processes messages for the main window.
@@ -153,42 +217,69 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_CREATE:
 
         buttonContainer = CreateWindowEx(0, TEXT("STATIC"), TEXT(""), WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, 40, 360, 640, 320, hWnd, NULL, hInst, NULL);
-        textContainer = CreateWindowEx(0, TEXT("STATIC"), TEXT(""), WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, 40, 40, 640, textConHeight, hWnd, NULL, hInst, NULL);
+        textContainer   = CreateWindowEx(0, TEXT("STATIC"), TEXT(""), WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, 40, 40, 640, textConHeight, hWnd, NULL, hInst, NULL);
 
-#define CREATE_BTN(text, collumn, row) \
+        textDisplay = CreateWindowEx(0, TEXT("EDIT"), TEXT(""), WS_VISIBLE | WS_CHILD, 0, 0, 640, textConHeight, textContainer, NULL, hInst, NULL);
+
+#define CREATE_BTN(id, text, collumn, row) \
         do { \
             int x = buttonMarginX + (collumn * (buttonGapX + buttonWidth)); \
             int y = buttonMarginY + (row * (buttonGapY + buttonHeight)); \
-            CreateWindowEx(0, TEXT("BUTTON"), text, WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, x, y, buttonWidth, buttonHeight, buttonContainer, NULL, hInst, NULL); \
+            CreateWindowEx(0, TEXT("BUTTON"), text, WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, x, y, buttonWidth, buttonHeight, buttonContainer, (HMENU)id, hInst, NULL); \
         } while(0)
 
 
-        CREATE_BTN(TEXT("("),  0, 0);
-        CREATE_BTN(TEXT(")"),  1, 0);
-        CREATE_BTN(TEXT("%"),  2, 0);
-        CREATE_BTN(TEXT("CE"), 3, 0);
 
-        CREATE_BTN(TEXT("7"), 0, 1);
-        CREATE_BTN(TEXT("8"), 1, 1);
-        CREATE_BTN(TEXT("9"), 2, 1);
-        CREATE_BTN(TEXT("/"), 3, 1);
+        CREATE_BTN(ID_BUTTON_LPEREN, TEXT("("),  0, 0);
+        CREATE_BTN(ID_BUTTON_RPEREN, TEXT(")"),  1, 0);
+        CREATE_BTN(ID_BUTTON_PERCEN, TEXT("%"),  2, 0);
+        CREATE_BTN(ID_BUTTON_CLEARE, TEXT("CE"), 3, 0);
 
-        CREATE_BTN(TEXT("4"), 0, 2);
-        CREATE_BTN(TEXT("5"), 1, 2);
-        CREATE_BTN(TEXT("6"), 2, 2);
-        CREATE_BTN(TEXT("x"), 3, 2);
+        CREATE_BTN(ID_BUTTON_SEVEN,  TEXT("7"), 0, 1);
+        CREATE_BTN(ID_BUTTON_EIGHT,  TEXT("8"), 1, 1);
+        CREATE_BTN(ID_BUTTON_NINE,   TEXT("9"), 2, 1);
+        CREATE_BTN(ID_BUTTON_DIVIDE, TEXT("/"), 3, 1);
 
-        CREATE_BTN(TEXT("1"), 0, 3);
-        CREATE_BTN(TEXT("2"), 1, 3);
-        CREATE_BTN(TEXT("3"), 2, 3);
-        CREATE_BTN(TEXT("-"), 3, 3);
+        CREATE_BTN(ID_BUTTON_FOUR,   TEXT("4"), 0, 2);
+        CREATE_BTN(ID_BUTTON_FIVE,   TEXT("5"), 1, 2);
+        CREATE_BTN(ID_BUTTON_SIX,    TEXT("6"), 2, 2);
+        CREATE_BTN(ID_BUTTON_MULTIP, TEXT("x"), 3, 2);
 
-        CREATE_BTN(TEXT("0"), 0, 4);
-        CREATE_BTN(TEXT("."), 1, 4);
-        CREATE_BTN(TEXT("="), 2, 4);
-        CREATE_BTN(TEXT("+"), 3, 4);
+        CREATE_BTN(ID_BUTTON_ONE,    TEXT("1"), 0, 3);
+        CREATE_BTN(ID_BUTTON_TWO,    TEXT("2"), 1, 3);
+        CREATE_BTN(ID_BUTTON_THREE,  TEXT("3"), 2, 3);
+        CREATE_BTN(ID_BUTTON_MINUS,  TEXT("-"), 3, 3);
+
+        CREATE_BTN(ID_BUTTON_ZERO,   TEXT("0"), 0, 4);
+        CREATE_BTN(ID_BUTTON_PERIOD, TEXT("."), 1, 4);
+        CREATE_BTN(ID_BUTTON_EQUALS, TEXT("="), 2, 4);
+        CREATE_BTN(ID_BUTTON_ADD,    TEXT("+"), 3, 4);
+
+        // SUBCLASS THE STATIC CONTROL
+        // Replace its window procedure with our custom one
+        g_pOriginalStaticProc = (WNDPROC)SetWindowLongPtr(
+            buttonContainer,
+            GWLP_WNDPROC,
+            (LONG_PTR)StaticContainerProc
+        );
 
         return 0;
+
+    case WM_COMMAND: 
+    {
+
+        int id = LOWORD(wParam);
+
+
+        switch (LOWORD(wParam))
+        {
+        case ID_BUTTON_ADD:
+            MessageBox(hWnd, L"YO YOU DO BE PRESSIN THE ADD BUTTON", L"COMMAND", MB_OK);
+            OutputDebugString(L"ADD PRESSED\n");
+        }
+
+        break;
+    }
     case WM_PAINT:
         hdc = BeginPaint(hWnd, &ps);
 
@@ -211,7 +302,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         buttonConHeight = rc.bottom - (textConHeight + (margin * 2) + gap);
 
         MoveWindow(buttonContainer, margin, buttonConOffsetY, rc.right - (margin * 2), buttonConHeight, TRUE);
-        MoveWindow(textContainer,   margin, margin,           rc.right - (margin * 2), textConHeight,                        TRUE);
+        MoveWindow(textContainer,   margin, margin,           rc.right - (margin * 2), textConHeight,   TRUE);
+
 
         break;
     case WM_KEYDOWN:
