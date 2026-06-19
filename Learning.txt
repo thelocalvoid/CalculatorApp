@@ -18,5 +18,7 @@ Was having compile issues, with old code.
 The reason was that i didnt declare WndProc before WndMain - SO obvious in hindsight 
 but they didnt do it in the tutorial, so i thought it was an exception because windows. I learnding
 
-
+Commit - Button Creation and refactor
 Learnt of #define to make helper macros
+Learnt the recommended way to create new windows (within WM_CREATE)
+Made a simple position calculation thing, with gap and margin
