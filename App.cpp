@@ -13,16 +13,16 @@
 
 // Global variables
 
-#define ID_BUTTON_ZERO    100
-#define ID_BUTTON_ONE     101
-#define ID_BUTTON_TWO     102
-#define ID_BUTTON_THREE   103
-#define ID_BUTTON_FOUR    104
-#define ID_BUTTON_FIVE    105
-#define ID_BUTTON_SIX     106
-#define ID_BUTTON_SEVEN   107
-#define ID_BUTTON_EIGHT   108
-#define ID_BUTTON_NINE    109
+#define ID_BUTTON_ZERO    100 // CRITICAL THAT THESE NUMBERS REMAIN 100-109
+#define ID_BUTTON_ONE     101 // 
+#define ID_BUTTON_TWO     102 // 
+#define ID_BUTTON_THREE   103 // 
+#define ID_BUTTON_FOUR    104 // 
+#define ID_BUTTON_FIVE    105 // 
+#define ID_BUTTON_SIX     106 // 
+#define ID_BUTTON_SEVEN   107 // 
+#define ID_BUTTON_EIGHT   108 // 
+#define ID_BUTTON_NINE    109 // CRITICAL THAT THESE NUMBERS REMAIN 100-109
 
 #define ID_BUTTON_ADD     110
 #define ID_BUTTON_MINUS   111
@@ -34,6 +34,8 @@
 #define ID_BUTTON_RPEREN  117
 #define ID_BUTTON_PERIOD  118
 #define ID_BUTTON_PERCEN  119
+
+#define ID_DIALOG_BOX     120
 
 
 
@@ -58,7 +60,9 @@ int buttonConHeight = NULL;
 // Stylization Settings
 int margin = 20;
 int gap = 20;
-int textConHeight = 100; 
+int textConHeight = 100;
+
+int nFontSize = 36; // Pixels
 
 int buttonHeight = 50;
 // Width is 2x the height
@@ -67,6 +71,14 @@ int buttonMarginX = 8;
 int buttonMarginY = 8;
 int buttonGapX = 4;
 int buttonGapY = 4;
+
+// Calculator Values
+
+bool nextInputShouldClearText = false;
+double currentInput = NULL;
+double previousValue = NULL;
+char currentOperator = NULL;
+std::string displayText;
 
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -79,6 +91,8 @@ int WINAPI WinMain(
 )
 {
     WNDCLASSEX wcex;
+
+    
 
     wcex.cbSize = sizeof(WNDCLASSEX);
     wcex.style = CS_HREDRAW | CS_VREDRAW;
@@ -215,11 +229,38 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_CREATE:
+    {
+        // Create a new font
+        HDC hDC = GetDC(NULL);
+        int dpiY = GetDeviceCaps(hDC, LOGPIXELSY);
+        ReleaseDC(NULL, hDC);
+
+        int height = -MulDiv(nFontSize, dpiY, 72);
+
+        HFONT font = CreateFont(
+            height,
+            0,
+            0,
+            0,
+            FW_BOLD,
+            FALSE, FALSE, FALSE,
+            DEFAULT_CHARSET,
+            OUT_DEFAULT_PRECIS,
+            CLIP_DEFAULT_PRECIS,
+            DEFAULT_QUALITY,
+            DEFAULT_PITCH || FF_DONTCARE,
+            L"Arial"
+        );
 
         buttonContainer = CreateWindowEx(0, TEXT("STATIC"), TEXT(""), WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, 40, 360, 640, 320, hWnd, NULL, hInst, NULL);
-        textContainer   = CreateWindowEx(0, TEXT("STATIC"), TEXT(""), WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, 40, 40, 640, textConHeight, hWnd, NULL, hInst, NULL);
+        textContainer = CreateWindowEx(0, TEXT("STATIC"), TEXT(""), WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, 40, 40, 640, textConHeight, hWnd, NULL, hInst, NULL);
 
-        textDisplay = CreateWindowEx(0, TEXT("EDIT"), TEXT(""), WS_VISIBLE | WS_CHILD, 0, 0, 640, textConHeight, textContainer, NULL, hInst, NULL);
+        textDisplay = CreateWindowEx(0, TEXT("EDIT"), TEXT(""), WS_VISIBLE | WS_CHILD, 0, 0, 640, textConHeight, textContainer, (HMENU)ID_DIALOG_BOX, hInst, NULL);
+
+        // Set Font of textDisplay
+        SendMessage(textDisplay, WM_SETFONT, (WPARAM)font, MAKELPARAM(TRUE, 0));
+
+
 
 #define CREATE_BTN(id, text, collumn, row) \
         do { \
@@ -230,30 +271,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 
 
-        CREATE_BTN(ID_BUTTON_LPEREN, TEXT("("),  0, 0);
-        CREATE_BTN(ID_BUTTON_RPEREN, TEXT(")"),  1, 0);
-        CREATE_BTN(ID_BUTTON_PERCEN, TEXT("%"),  2, 0);
+        CREATE_BTN(ID_BUTTON_LPEREN, TEXT("("), 0, 0);
+        CREATE_BTN(ID_BUTTON_RPEREN, TEXT(")"), 1, 0);
+        CREATE_BTN(ID_BUTTON_PERCEN, TEXT("%"), 2, 0);
         CREATE_BTN(ID_BUTTON_CLEARE, TEXT("CE"), 3, 0);
 
-        CREATE_BTN(ID_BUTTON_SEVEN,  TEXT("7"), 0, 1);
-        CREATE_BTN(ID_BUTTON_EIGHT,  TEXT("8"), 1, 1);
-        CREATE_BTN(ID_BUTTON_NINE,   TEXT("9"), 2, 1);
+        CREATE_BTN(ID_BUTTON_SEVEN, TEXT("7"), 0, 1);
+        CREATE_BTN(ID_BUTTON_EIGHT, TEXT("8"), 1, 1);
+        CREATE_BTN(ID_BUTTON_NINE, TEXT("9"), 2, 1);
         CREATE_BTN(ID_BUTTON_DIVIDE, TEXT("/"), 3, 1);
 
-        CREATE_BTN(ID_BUTTON_FOUR,   TEXT("4"), 0, 2);
-        CREATE_BTN(ID_BUTTON_FIVE,   TEXT("5"), 1, 2);
-        CREATE_BTN(ID_BUTTON_SIX,    TEXT("6"), 2, 2);
+        CREATE_BTN(ID_BUTTON_FOUR, TEXT("4"), 0, 2);
+        CREATE_BTN(ID_BUTTON_FIVE, TEXT("5"), 1, 2);
+        CREATE_BTN(ID_BUTTON_SIX, TEXT("6"), 2, 2);
         CREATE_BTN(ID_BUTTON_MULTIP, TEXT("x"), 3, 2);
 
-        CREATE_BTN(ID_BUTTON_ONE,    TEXT("1"), 0, 3);
-        CREATE_BTN(ID_BUTTON_TWO,    TEXT("2"), 1, 3);
-        CREATE_BTN(ID_BUTTON_THREE,  TEXT("3"), 2, 3);
-        CREATE_BTN(ID_BUTTON_MINUS,  TEXT("-"), 3, 3);
+        CREATE_BTN(ID_BUTTON_ONE, TEXT("1"), 0, 3);
+        CREATE_BTN(ID_BUTTON_TWO, TEXT("2"), 1, 3);
+        CREATE_BTN(ID_BUTTON_THREE, TEXT("3"), 2, 3);
+        CREATE_BTN(ID_BUTTON_MINUS, TEXT("-"), 3, 3);
 
-        CREATE_BTN(ID_BUTTON_ZERO,   TEXT("0"), 0, 4);
+        CREATE_BTN(ID_BUTTON_ZERO, TEXT("0"), 0, 4);
         CREATE_BTN(ID_BUTTON_PERIOD, TEXT("."), 1, 4);
         CREATE_BTN(ID_BUTTON_EQUALS, TEXT("="), 2, 4);
-        CREATE_BTN(ID_BUTTON_ADD,    TEXT("+"), 3, 4);
+        CREATE_BTN(ID_BUTTON_ADD, TEXT("+"), 3, 4);
 
         // SUBCLASS THE STATIC CONTROL
         // Replace its window procedure with our custom one
@@ -264,7 +305,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         );
 
         return 0;
-
+    }
     case WM_COMMAND: 
     {
 
@@ -274,8 +315,65 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         switch (LOWORD(wParam))
         {
         case ID_BUTTON_ADD:
-            MessageBox(hWnd, L"YO YOU DO BE PRESSIN THE ADD BUTTON", L"COMMAND", MB_OK);
+            //MessageBox(hWnd, L"ADD BUTTON, WE GOIN UP", L"COMMAND", MB_OK);
             OutputDebugString(L"ADD PRESSED\n");
+            break;
+        case ID_BUTTON_MINUS:
+            //MessageBox(hWnd, L"MINUS BUTTON, WE GOIN DOWN", L"COMMAND", MB_OK);
+            OutputDebugString(L"MINUS PRESSED\n");
+            break;
+        case ID_BUTTON_MULTIP:
+            //MessageBox(hWnd, L"MULTIPLY BUTTON, WE GOING PLACES", L"COMMAND", MB_OK);
+            OutputDebugString(L"MULTIPLY PRESSED\n");
+            break;
+        case ID_BUTTON_DIVIDE:
+            MessageBox(hWnd, L"DIVIDE PRESSED, LETS NOT DO ANYTHING IRRATIONAL NOW", L"COMMAND", MB_OK);
+            OutputDebugString(L"DIVIDE PRESSED\n");
+            break;
+        case ID_BUTTON_CLEARE:
+
+            SetDlgItemText(textContainer, ID_DIALOG_BOX, L"0");
+            previousValue = 0.0;
+            currentInput = 0.0;
+            currentOperator = 0;
+            nextInputShouldClearText = true;
+            break;
+        default:
+            // HANDLE NUMBER KEYS
+            if (LOWORD(wParam) >= 100 && LOWORD(wParam) <= 109) {
+
+                if (nextInputShouldClearText) {
+                    SetDlgItemText(textContainer, ID_DIALOG_BOX, L"");
+                    nextInputShouldClearText = false;
+                }
+
+                //append
+
+                TCHAR textBuffer[128];
+                int numKeyPressed = LOWORD(wParam) - 100; // this works because our key ids are 100-109 for number keys
+
+                GetDlgItemText(textContainer, ID_DIALOG_BOX, textBuffer, 128);
+
+                // _tcslen returns the current length of the string
+                size_t textLength = _tcslen(textBuffer);
+
+                //_countof returns the bytes allocated to the buffer (max chars allowed)
+                if (textLength + 1 < _countof(textBuffer)) {
+                    textBuffer[textLength] = (TCHAR)(48 + numKeyPressed); //48 is 0 in ascii
+                    textBuffer[textLength + 1] = _T('\0');
+                }
+                else {
+                    MessageBox(hWnd, L"Maximum string length!", L"WARNING", MB_OK);
+                }
+
+                SetDlgItemText(textContainer, ID_DIALOG_BOX, textBuffer);
+
+                TCHAR numkeymsg[32];
+                wsprintf(numkeymsg, _T("Key Pressed: %d\n"), LOWORD(wParam)-100);
+                //MessageBox(hWnd, numkeymsg, L"COMMAND", MB_OK);
+                OutputDebugString(numkeymsg);
+            }
+            break;
         }
 
         break;
