@@ -75,9 +75,11 @@ int buttonGapY = 4;
 // Calculator Values
 
 bool nextInputShouldClearText = true; // Set true because display initially "0"
+// These should be the only sources of truth
 double currentInput = NULL;
 double previousValue = NULL;
 int currentOperator = NULL;
+
 std::string displayText;
 
 // Forward declarations of functions included in this code module:
@@ -232,6 +234,47 @@ void AppendCharToTextBuffer(TCHAR* textBuffer, size_t size, TCHAR charToAppend) 
         MessageBox(textContainer, L"Maximum string length!", L"WARNING", MB_OK);
     }
 }
+// Calculates sum, 
+// Sets previousValue to sum
+// Sets the dialog text to sum
+// Sets currentInput 0.0
+// Sets nextInputShouldClearText to true
+void ProcessCalculation() {
+    switch (currentOperator) {
+    case ID_BUTTON_ADD:
+    {
+        double sum = previousValue + currentInput;
+
+        TCHAR numkeymsg[256];
+        swprintf_s(numkeymsg, 256, L"%.f", sum);
+        SetDlgItemText(textContainer, ID_DIALOG_BOX, numkeymsg);
+
+        previousValue = sum;
+
+        break;
+    }
+    case ID_BUTTON_MINUS:
+    {
+        double sum = previousValue - currentInput;
+
+        TCHAR numkeymsg[256];
+        swprintf_s(numkeymsg, 256, L"%.f", sum);
+        SetDlgItemText(textContainer, ID_DIALOG_BOX, numkeymsg);
+
+        previousValue = sum;
+
+
+        break;
+    }
+    }
+
+    nextInputShouldClearText = true;
+    currentInput = 0.0;
+}
+
+void SetPreviousValueToCurrentInput() {
+    previousValue = currentInput;
+}
 
 
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
@@ -337,21 +380,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if (id >= ID_BUTTON_ADD && id <= ID_BUTTON_MULTIP) {
             // Operator pressed
             if (currentOperator != NULL) {
-                // Perform calculations
+                if (currentOperator >= ID_BUTTON_ADD && currentOperator <= ID_BUTTON_MULTIP) {
+
+                    ProcessCalculation();
+                }
+            }
+            else {
+                previousValue = currentInput;
             }
 
             currentOperator = id;
-
-            TCHAR buffer[256];
-            TCHAR* endPtr;
-            GetDlgItemText(textContainer, ID_DIALOG_BOX, buffer, 256);
-            previousValue = _tcstod(buffer, &endPtr);
-
-            TCHAR numkeymsg[256];
-            // Using swprintf_s for doubles
-            swprintf_s(numkeymsg, 256, L"The value is: %.2f\n", previousValue);
-
-            OutputDebugString(numkeymsg);
+            currentInput = 0.0;
 
             nextInputShouldClearText = true;
 
@@ -370,16 +409,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             //append
 
-            TCHAR textBuffer[128];
+            TCHAR textBuffer[256];
             int numKeyPressed = LOWORD(wParam) - 100; // this works because our key ids are 100-109 for number keys, probably not smart
 
             // Get text from dialog box
-            GetDlgItemText(textContainer, ID_DIALOG_BOX, textBuffer, 128);
+            GetDlgItemText(textContainer, ID_DIALOG_BOX, textBuffer, 256);
 
             AppendCharToTextBuffer(textBuffer, _countof(textBuffer), (TCHAR)(48 + numKeyPressed)); // Add 48 for Ascii
 
             // Update dialog box
             SetDlgItemText(textContainer, ID_DIALOG_BOX, textBuffer);
+
+            TCHAR* endPtr;
+            currentInput = _tcstod(textBuffer, &endPtr);
+
 
             TCHAR numkeymsg[32];
             wsprintf(numkeymsg, _T("Key Pressed: %d\n"), LOWORD(wParam) - 100);
@@ -393,33 +436,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         // Equals button
         else if (id == ID_BUTTON_EQUALS) {
             // Calculate sum
-            TCHAR buffer[256];
-            TCHAR* endPtr;
-            GetDlgItemText(textContainer, ID_DIALOG_BOX, buffer, 256);
-            double finalValue = _tcstod(buffer, &endPtr);
 
-            switch (currentOperator) {
-            case ID_BUTTON_ADD:
-            {
-                TCHAR numkeymsg[256];
-                swprintf_s(numkeymsg, 256, L"%.f", previousValue + finalValue);
-                SetDlgItemText(textContainer, ID_DIALOG_BOX, numkeymsg);
-
-                nextInputShouldClearText = true;
-
-                break;
-            }
-            case ID_BUTTON_MINUS:
-            {
-                TCHAR numkeymsg[256];
-                swprintf_s(numkeymsg, 256, L"%.f", previousValue - finalValue);
-                SetDlgItemText(textContainer, ID_DIALOG_BOX, numkeymsg);
-
-                nextInputShouldClearText = true;
-
-                break;
-            }
-            }
+            ProcessCalculation();
             currentOperator = NULL;
 
         }
