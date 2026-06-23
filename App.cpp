@@ -258,6 +258,9 @@ void ProcessCalculation() {
     case ID_BUTTON_MULTIP:
         sum = previousValue * currentInput;
         break;
+    case ID_BUTTON_PERCEN:
+        sum = std::fmod( previousValue, currentInput );
+        break;
     }
 
     TCHAR numkeymsg[256];
@@ -271,9 +274,6 @@ void ProcessCalculation() {
     currentInput = 0.0;
 }
 
-void SetPreviousValueToCurrentInput() {
-    previousValue = currentInput;
-}
 
 
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
@@ -335,8 +335,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 
 
-        CREATE_BTN(ID_BUTTON_LPEREN, TEXT("("), 0, 0);
-        CREATE_BTN(ID_BUTTON_RPEREN, TEXT(")"), 1, 0);
+        //CREATE_BTN(ID_BUTTON_LPEREN, TEXT("("), 0, 0);
+        //CREATE_BTN(ID_BUTTON_RPEREN, TEXT(")"), 1, 0);
         CREATE_BTN(ID_BUTTON_PERCEN, TEXT("%"), 2, 0);
         CREATE_BTN(ID_BUTTON_CLEARE, TEXT("CE"), 3, 0);
 
@@ -376,7 +376,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         int id = LOWORD(wParam);
 
         // Operator keys [+-*/]
-        if (id >= ID_BUTTON_ADD && id <= ID_BUTTON_MULTIP) {
+        if (id >= ID_BUTTON_ADD && id <= ID_BUTTON_MULTIP || id == ID_BUTTON_PERCEN) {
             // Operator pressed
             if (currentOperator != NULL) {
                 if (currentOperator >= ID_BUTTON_ADD && currentOperator <= ID_BUTTON_MULTIP) {
@@ -393,10 +393,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             nextInputShouldClearText = true;
 
-
-            if (id == ID_BUTTON_DIVIDE) {
-                MessageBox(hWnd, L"DIVIDE PRESSED, LETS NOT DO ANYTHING IRRATIONAL NOW", L"COMMAND", MB_OK);
-            }
         }
         // Number buttons [0-9]
         else if (id >= ID_BUTTON_ZERO && id <= ID_BUTTON_NINE) {
@@ -431,6 +427,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         // Period button
         else if (id == ID_BUTTON_PERIOD) {
 
+            TCHAR textBuffer[256];
+
+            // Get text from dialog box
+            GetDlgItemText(textContainer, ID_DIALOG_BOX, textBuffer, 256);
+
+            AppendCharToTextBuffer(textBuffer, _countof(textBuffer), 46); // Add 48 for Ascii
+
+            // Update dialog box
+            SetDlgItemText(textContainer, ID_DIALOG_BOX, textBuffer);
+
+            TCHAR* endPtr;
+            currentInput = _tcstod(textBuffer, &endPtr);
         }
         // Clear button
         else if (id == ID_BUTTON_CLEARE) {
