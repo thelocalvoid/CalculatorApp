@@ -22,3 +22,8 @@ Commit - Button Creation and refactor
 Learnt of #define to make helper macros
 Learnt the recommended way to create new windows (within WM_CREATE)
 Made a simple position calculation thing, with gap and margin
+
+Commit - Unfinished display input functionality
+Learnt how to set fonts by creating a new font 
+and sending a set font message
+Appending chars to string and displaying on screen

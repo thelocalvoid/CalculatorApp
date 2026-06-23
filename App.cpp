@@ -74,10 +74,10 @@ int buttonGapY = 4;
 
 // Calculator Values
 
-bool nextInputShouldClearText = false;
+bool nextInputShouldClearText = true; // Set true because display initially "0"
 double currentInput = NULL;
 double previousValue = NULL;
-char currentOperator = NULL;
+int currentOperator = NULL;
 std::string displayText;
 
 // Forward declarations of functions included in this code module:
@@ -92,7 +92,7 @@ int WINAPI WinMain(
 {
     WNDCLASSEX wcex;
 
-    
+
 
     wcex.cbSize = sizeof(WNDCLASSEX);
     wcex.style = CS_HREDRAW | CS_VREDRAW;
@@ -211,6 +211,28 @@ LRESULT CALLBACK StaticContainerProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 }
 
 
+void ClearEverything() {
+
+    SetDlgItemText(textContainer, ID_DIALOG_BOX, L"0");
+    previousValue = 0.0;
+    currentInput = 0.0;
+    currentOperator = 0;
+    nextInputShouldClearText = true;
+}
+
+void AppendCharToTextBuffer(TCHAR* textBuffer, size_t size, TCHAR charToAppend) {
+
+    size_t textLength = _tcslen(textBuffer);
+    
+    if (textLength + 1 < size) {
+        textBuffer[textLength] = charToAppend;
+        textBuffer[textLength + 1] = _T('\0');
+    }
+    else {
+        MessageBox(textContainer, L"Maximum string length!", L"WARNING", MB_OK);
+    }
+}
+
 
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
@@ -255,7 +277,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         buttonContainer = CreateWindowEx(0, TEXT("STATIC"), TEXT(""), WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, 40, 360, 640, 320, hWnd, NULL, hInst, NULL);
         textContainer = CreateWindowEx(0, TEXT("STATIC"), TEXT(""), WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN, 40, 40, 640, textConHeight, hWnd, NULL, hInst, NULL);
 
-        textDisplay = CreateWindowEx(0, TEXT("EDIT"), TEXT(""), WS_VISIBLE | WS_CHILD, 0, 0, 640, textConHeight, textContainer, (HMENU)ID_DIALOG_BOX, hInst, NULL);
+        textDisplay = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("EDIT"), TEXT("0"), WS_VISIBLE | WS_CHILD | ES_READONLY | ES_RIGHT, 0, 0, 640, textConHeight, textContainer, (HMENU)ID_DIALOG_BOX, hInst, NULL);
 
         // Set Font of textDisplay
         SendMessage(textDisplay, WM_SETFONT, (WPARAM)font, MAKELPARAM(TRUE, 0));
@@ -306,74 +328,100 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         return 0;
     }
-    case WM_COMMAND: 
+    case WM_COMMAND:
     {
 
         int id = LOWORD(wParam);
 
-
-        switch (LOWORD(wParam))
-        {
-        case ID_BUTTON_ADD:
-            //MessageBox(hWnd, L"ADD BUTTON, WE GOIN UP", L"COMMAND", MB_OK);
-            OutputDebugString(L"ADD PRESSED\n");
-            break;
-        case ID_BUTTON_MINUS:
-            //MessageBox(hWnd, L"MINUS BUTTON, WE GOIN DOWN", L"COMMAND", MB_OK);
-            OutputDebugString(L"MINUS PRESSED\n");
-            break;
-        case ID_BUTTON_MULTIP:
-            //MessageBox(hWnd, L"MULTIPLY BUTTON, WE GOING PLACES", L"COMMAND", MB_OK);
-            OutputDebugString(L"MULTIPLY PRESSED\n");
-            break;
-        case ID_BUTTON_DIVIDE:
-            MessageBox(hWnd, L"DIVIDE PRESSED, LETS NOT DO ANYTHING IRRATIONAL NOW", L"COMMAND", MB_OK);
-            OutputDebugString(L"DIVIDE PRESSED\n");
-            break;
-        case ID_BUTTON_CLEARE:
-
-            SetDlgItemText(textContainer, ID_DIALOG_BOX, L"0");
-            previousValue = 0.0;
-            currentInput = 0.0;
-            currentOperator = 0;
-            nextInputShouldClearText = true;
-            break;
-        default:
-            // HANDLE NUMBER KEYS
-            if (LOWORD(wParam) >= 100 && LOWORD(wParam) <= 109) {
-
-                if (nextInputShouldClearText) {
-                    SetDlgItemText(textContainer, ID_DIALOG_BOX, L"");
-                    nextInputShouldClearText = false;
-                }
-
-                //append
-
-                TCHAR textBuffer[128];
-                int numKeyPressed = LOWORD(wParam) - 100; // this works because our key ids are 100-109 for number keys
-
-                GetDlgItemText(textContainer, ID_DIALOG_BOX, textBuffer, 128);
-
-                // _tcslen returns the current length of the string
-                size_t textLength = _tcslen(textBuffer);
-
-                //_countof returns the bytes allocated to the buffer (max chars allowed)
-                if (textLength + 1 < _countof(textBuffer)) {
-                    textBuffer[textLength] = (TCHAR)(48 + numKeyPressed); //48 is 0 in ascii
-                    textBuffer[textLength + 1] = _T('\0');
-                }
-                else {
-                    MessageBox(hWnd, L"Maximum string length!", L"WARNING", MB_OK);
-                }
-
-                SetDlgItemText(textContainer, ID_DIALOG_BOX, textBuffer);
-
-                TCHAR numkeymsg[32];
-                wsprintf(numkeymsg, _T("Key Pressed: %d\n"), LOWORD(wParam)-100);
-                //MessageBox(hWnd, numkeymsg, L"COMMAND", MB_OK);
-                OutputDebugString(numkeymsg);
+        // Operator keys (+ - * /)
+        if (id >= ID_BUTTON_ADD && id <= ID_BUTTON_MULTIP) {
+            // Operator pressed
+            if (currentOperator != NULL) {
+                // Perform calculations
             }
-            break;
+
+            currentOperator = id;
+
+            TCHAR buffer[256];
+            TCHAR* endPtr;
+            GetDlgItemText(textContainer, ID_DIALOG_BOX, buffer, 256);
+            previousValue = _tcstod(buffer, &endPtr);
+
+            TCHAR numkeymsg[256];
+            // Using swprintf_s for doubles
+            swprintf_s(numkeymsg, 256, L"The value is: %.2f\n", previousValue);
+
+            OutputDebugString(numkeymsg);
+
+            nextInputShouldClearText = true;
+
+
+            if (id == ID_BUTTON_DIVIDE) {
+                MessageBox(hWnd, L"DIVIDE PRESSED, LETS NOT DO ANYTHING IRRATIONAL NOW", L"COMMAND", MB_OK);
+            }
+        }
+        // Number buttons
+        else if (id >= ID_BUTTON_ZERO && id <= ID_BUTTON_NINE) {
+
+            if (nextInputShouldClearText) {
+                SetDlgItemText(textContainer, ID_DIALOG_BOX, L"");
+                nextInputShouldClearText = false;
+            }
+
+            //append
+
+            TCHAR textBuffer[128];
+            int numKeyPressed = LOWORD(wParam) - 100; // this works because our key ids are 100-109 for number keys, probably not smart
+
+            // Get text from dialog box
+            GetDlgItemText(textContainer, ID_DIALOG_BOX, textBuffer, 128);
+
+            AppendCharToTextBuffer(textBuffer, _countof(textBuffer), (TCHAR)(48 + numKeyPressed)); // Add 48 for Ascii
+
+            // Update dialog box
+            SetDlgItemText(textContainer, ID_DIALOG_BOX, textBuffer);
+
+            TCHAR numkeymsg[32];
+            wsprintf(numkeymsg, _T("Key Pressed: %d\n"), LOWORD(wParam) - 100);
+            //MessageBox(hWnd, numkeymsg, L"COMMAND", MB_OK);
+            OutputDebugString(numkeymsg);
+        }
+        // Clear button
+        else if (id == ID_BUTTON_CLEARE) {
+            ClearEverything();
+        }
+        // Equals button
+        else if (id == ID_BUTTON_EQUALS) {
+            // Calculate sum
+            TCHAR buffer[256];
+            TCHAR* endPtr;
+            GetDlgItemText(textContainer, ID_DIALOG_BOX, buffer, 256);
+            double finalValue = _tcstod(buffer, &endPtr);
+
+            switch (currentOperator) {
+            case ID_BUTTON_ADD:
+            {
+                TCHAR numkeymsg[256];
+                swprintf_s(numkeymsg, 256, L"%.f", previousValue + finalValue);
+                SetDlgItemText(textContainer, ID_DIALOG_BOX, numkeymsg);
+
+                nextInputShouldClearText = true;
+
+                break;
+            }
+            case ID_BUTTON_MINUS:
+            {
+                TCHAR numkeymsg[256];
+                swprintf_s(numkeymsg, 256, L"%.f", previousValue - finalValue);
+                SetDlgItemText(textContainer, ID_DIALOG_BOX, numkeymsg);
+
+                nextInputShouldClearText = true;
+
+                break;
+            }
+            }
+            currentOperator = NULL;
+
         }
 
         break;
@@ -400,7 +448,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         buttonConHeight = rc.bottom - (textConHeight + (margin * 2) + gap);
 
         MoveWindow(buttonContainer, margin, buttonConOffsetY, rc.right - (margin * 2), buttonConHeight, TRUE);
-        MoveWindow(textContainer,   margin, margin,           rc.right - (margin * 2), textConHeight,   TRUE);
+        MoveWindow(textContainer, margin, margin, rc.right - (margin * 2), textConHeight, TRUE);
 
 
         break;
