@@ -240,33 +240,32 @@ void AppendCharToTextBuffer(TCHAR* textBuffer, size_t size, TCHAR charToAppend) 
 // Sets currentInput 0.0
 // Sets nextInputShouldClearText to true
 void ProcessCalculation() {
+
+    double sum;
+
     switch (currentOperator) {
     case ID_BUTTON_ADD:
-    {
-        double sum = previousValue + currentInput;
-
-        TCHAR numkeymsg[256];
-        swprintf_s(numkeymsg, 256, L"%.f", sum);
-        SetDlgItemText(textContainer, ID_DIALOG_BOX, numkeymsg);
-
-        previousValue = sum;
-
+        sum = previousValue + currentInput;
         break;
-    }
     case ID_BUTTON_MINUS:
+        sum = previousValue - currentInput;
+        break;
+    case ID_BUTTON_DIVIDE:
     {
-        double sum = previousValue - currentInput;
-
-        TCHAR numkeymsg[256];
-        swprintf_s(numkeymsg, 256, L"%.f", sum);
-        SetDlgItemText(textContainer, ID_DIALOG_BOX, numkeymsg);
-
-        previousValue = sum;
-
-
+        sum = previousValue / currentInput;
         break;
     }
+    case ID_BUTTON_MULTIP:
+        sum = previousValue * currentInput;
+        break;
     }
+
+    TCHAR numkeymsg[256];
+    swprintf_s(numkeymsg, 256, L"%.15g", sum);
+    SetDlgItemText(textContainer, ID_DIALOG_BOX, numkeymsg);
+    OutputDebugString(numkeymsg);
+
+    previousValue = sum;
 
     nextInputShouldClearText = true;
     currentInput = 0.0;
@@ -376,7 +375,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         int id = LOWORD(wParam);
 
-        // Operator keys (+ - * /)
+        // Operator keys [+-*/]
         if (id >= ID_BUTTON_ADD && id <= ID_BUTTON_MULTIP) {
             // Operator pressed
             if (currentOperator != NULL) {
@@ -399,7 +398,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 MessageBox(hWnd, L"DIVIDE PRESSED, LETS NOT DO ANYTHING IRRATIONAL NOW", L"COMMAND", MB_OK);
             }
         }
-        // Number buttons
+        // Number buttons [0-9]
         else if (id >= ID_BUTTON_ZERO && id <= ID_BUTTON_NINE) {
 
             if (nextInputShouldClearText) {
@@ -428,6 +427,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             wsprintf(numkeymsg, _T("Key Pressed: %d\n"), LOWORD(wParam) - 100);
             //MessageBox(hWnd, numkeymsg, L"COMMAND", MB_OK);
             OutputDebugString(numkeymsg);
+        }
+        // Period button
+        else if (id == ID_BUTTON_PERIOD) {
+
         }
         // Clear button
         else if (id == ID_BUTTON_CLEARE) {
